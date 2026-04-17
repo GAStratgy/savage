@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rose Savard-Ferguson · Snowboard Cross Analytics</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg:      #f0f2f5;
+      --card:    #ffffff;
+      --header:  #111827;
+      --blue:    #2563eb;
+      --orange:  #ea580c;
+      --danger:  #dc2626;
+      --green:   #16a34a;
+      --amber:   #d97706;
+      --text:    #111827;
+      --muted:   #6b7280;
+      --border:  #e5e7eb;
+      --shadow:  0 1px 4px rgba(0,0,0,.08);
+      --r:       10px;
+      --gap:     16px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+           background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+
+    /* ── WRAP ── */
+    .wrap { max-width: 1300px; margin: 0 auto; padding: 20px var(--gap); }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--header); border-radius: var(--r);
+      padding: 20px 28px; margin-bottom: var(--gap);
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 16px; flex-wrap: wrap;
+    }
+    .hd-left h1 { font-size: 17px; font-weight: 700; color: #fff; }
+    .hd-left p  { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+    .legend-pills { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+    .pill { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #d1d5db; }
+    .pill-line-dash  { width: 26px; height: 3px; border-top: 3px dashed var(--orange); }
+    .pill-line-solid { width: 26px; height: 3px; background: var(--blue); border-radius: 2px; }
+    .pill-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── TABS ── */
+    .tab-nav {
+      display: flex; gap: 4px; margin-bottom: var(--gap);
+      border-bottom: 2px solid var(--border); padding-bottom: 0;
+    }
+    .tab-btn {
+      padding: 10px 22px; border: none; background: none; cursor: pointer;
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      border-bottom: 3px solid transparent; margin-bottom: -2px;
+      border-radius: 6px 6px 0 0; transition: color .15s;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); background: #eff6ff; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── KPI ROW ── */
+    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+               gap: var(--gap); margin-bottom: var(--gap); }
+    .kpi { background: var(--card); border-radius: var(--r); padding: 16px 18px;
+           box-shadow: var(--shadow); border-top: 3px solid var(--border); }
+    .kpi.blue   { border-top-color: var(--blue); }
+    .kpi.green  { border-top-color: var(--green); }
+    .kpi.red    { border-top-color: var(--danger); }
+    .kpi.amber  { border-top-color: var(--amber); }
+    .kpi-label  { font-size: 10.5px; text-transform: uppercase; letter-spacing: .6px;
+                  color: var(--muted); margin-bottom: 5px; }
+    .kpi-values { display: flex; align-items: baseline; gap: 8px; }
+    .kpi-new    { font-size: 24px; font-weight: 800; color: var(--blue); }
+    .kpi-old    { font-size: 14px; font-weight: 600; color: var(--muted); text-decoration: line-through; }
+    .kpi-delta  { font-size: 11.5px; font-weight: 600; margin-top: 4px; }
+    .up   { color: var(--green); }
+    .down { color: var(--danger); }
+    .warn { color: var(--amber); }
+
+    /* ── CHART LAYOUT ── */
+    .chart-row   { display: grid; grid-template-columns: 2fr 1fr; gap: var(--gap); margin-bottom: var(--gap); }
+    .chart-row-2 { display: grid; grid-template-columns: 1fr 1fr;  gap: var(--gap); margin-bottom: var(--gap); }
+    .card { background: var(--card); border-radius: var(--r); padding: 20px 24px; box-shadow: var(--shadow); }
+    .card-title { font-size: 12px; font-weight: 700; text-transform: uppercase;
+                  letter-spacing: .5px; color: var(--text); margin-bottom: 3px; }
+    .card-sub   { font-size: 11.5px; color: var(--muted); margin-bottom: 14px; }
+    .chart-wrap canvas { width: 100% !important; }
+    .cutoff-badge { display: inline-block; background: #fee2e2; color: var(--danger);
+                    font-size: 10px; font-weight: 700; letter-spacing: .4px;
+                    padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
+
+    /* ── INSIGHTS ── */
+    .insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+                gap: var(--gap); margin-bottom: var(--gap); }
+    .insight { background: var(--card); border-radius: var(--r); padding: 14px 16px;
+               box-shadow: var(--shadow); border-left: 4px solid var(--border); }
+    .insight.blue  { border-color: var(--blue); }
+    .insight.green { border-color: var(--green); }
+    .insight.amber { border-color: var(--amber); }
+    .insight-icon  { font-size: 16px; margin-bottom: 5px; }
+    .insight-title { font-size: 11.5px; font-weight: 700; color: var(--text); margin-bottom: 3px;
+                     text-transform: uppercase; letter-spacing: .4px; }
+    .insight-body  { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .insight-body strong { color: var(--text); }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    .race-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .race-table thead th {
+      text-align: left; padding: 8px 12px; border-bottom: 2px solid var(--border);
+      font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+      color: var(--muted); white-space: nowrap; cursor: pointer; user-select: none;
+    }
+    .race-table thead th:hover { color: var(--text); }
+    .race-table tbody td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+    .race-table tbody tr:last-child td { border-bottom: none; }
+    .race-table tbody tr:hover { background: #f9fafb; }
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 20px;
+             font-size: 11px; font-weight: 700; }
+    .badge-26  { background: #eff6ff; color: var(--blue); }
+    .badge-25  { background: #fff7ed; color: var(--orange); }
+    .place-pod { background: #fef9c3; color: #92400e; font-weight: 800; }
+    .place-5   { background: #dcfce7; color: #166534; font-weight: 700; }
+    .place-10  { background: #dbeafe; color: #1e40af; font-weight: 700; }
+    .place-16  { background: #f3f4f6; color: #374151; }
+    .place-out { background: #fee2e2; color: var(--danger); font-weight: 700; }
+
+    /* ── WC SPECIFIC ── */
+    .wc-note { background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--r);
+               padding: 12px 16px; margin-bottom: var(--gap); font-size: 12.5px; color: #92400e; }
+    .wc-note strong { font-weight: 700; }
+    .fis-pts { font-weight: 600; color: var(--blue); }
+
+    /* ── FOOTER ── */
+    footer { text-align: center; font-size: 11px; color: var(--muted); padding: 16px 0 8px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 860px) { .chart-row, .chart-row-2 { grid-template-columns: 1fr; } }
+    @media (max-width: 600px) { .kpi-row { grid-template-columns: repeat(2,1fr); } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header>
+    <div class="hd-left">
+      <h1>Rose Savard-Ferguson &nbsp;<span style="font-weight:400;color:#9ca3af;font-size:13px">"Savage"</span> &nbsp;&mdash;&nbsp; Snowboard Cross Analytics</h1>
+      <p>Season-over-Season Progression &nbsp;·&nbsp; 2024–25 vs 2025–26</p>
+    </div>
+    <div class="legend-pills">
+      <div class="pill"><div class="pill-line-dash"></div> 2024–25</div>
+      <div class="pill"><div class="pill-line-solid"></div> 2025–26</div>
+      <div class="pill"><div class="pill-dot" style="background:var(--danger)"></div> Qual Cutoff @ 16th</div>
+    </div>
+  </header>
+
+  <!-- TABS -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('noram')">Nor-Am &amp; Europa Cup</button>
+    <button class="tab-btn" onclick="switchTab('wc')">World Cup</button>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TAB 1 — NOR-AM / EUROPA CUP
+  ════════════════════════════════════════ -->
+  <div class="tab-panel active" id="tab-noram">
+
+    <!-- KPI CARDS -->
+    <div class="kpi-row">
+      <div class="kpi blue">
+        <div class="kpi-label">Qual Rate (Top 16)</div>
+        <div class="kpi-values"><span class="kpi-new">91%</span><span class="kpi-old">56%</span></div>
+        <div class="kpi-delta up">▲ +35pp</div>
+      </div>
+      <div class="kpi green">
+        <div class="kpi-label">Podiums (Top 3)</div>
+        <div class="kpi-values"><span class="kpi-new">3</span><span class="kpi-old">0</span></div>
+        <div class="kpi-delta up">▲ 27% rate (was 0%)</div>
+      </div>
+      <div class="kpi blue">
+        <div class="kpi-label">Top 5 Finishes</div>
+        <div class="kpi-values"><span class="kpi-new">5</span><span class="kpi-old">1</span></div>
+        <div class="kpi-delta up">▲ +400% &nbsp;·&nbsp; 45% of races</div>
+      </div>
+      <div class="kpi blue">
+        <div class="kpi-label">Top 10 Finishes</div>
+        <div class="kpi-values"><span class="kpi-new">8</span><span class="kpi-old">3</span></div>
+        <div class="kpi-delta up">▲ +167% &nbsp;·&nbsp; 73% of races</div>
+      </div>
+      <div class="kpi green">
+        <div class="kpi-label">Median Finish</div>
+        <div class="kpi-values"><span class="kpi-new">6th</span><span class="kpi-old">15th</span></div>
+        <div class="kpi-delta up">▲ 9 places better</div>
+      </div>
+      <div class="kpi green">
+        <div class="kpi-label">Best Finish</div>
+        <div class="kpi-values"><span class="kpi-new">1st</span><span class="kpi-old">4th</span></div>
+        <div class="kpi-delta up">▲ New ceiling</div>
+      </div>
+      <div class="kpi red">
+        <div class="kpi-label">Non-Qual (&gt;16th)</div>
+        <div class="kpi-values"><span class="kpi-new" style="color:var(--danger)">1</span><span class="kpi-old">4</span></div>
+        <div class="kpi-delta up">▼ 75% reduction</div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW 1 -->
+    <div class="chart-row">
+      <div class="card">
+        <div class="card-title">Race-by-Race Results <span class="cutoff-badge">▬ Qual Cutoff @ 16th</span></div>
+        <div class="card-sub">Chronological finishing positions — lower on chart = better</div>
+        <div class="chart-wrap" style="height:295px"><canvas id="lineChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Result Tier Comparison</div>
+        <div class="card-sub">Count &amp; % improvement over prior season</div>
+        <div class="chart-wrap" style="height:295px"><canvas id="barChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW 2 -->
+    <div class="chart-row-2">
+      <div class="card">
+        <div class="card-title">Finish Distribution</div>
+        <div class="card-sub">Tighter cluster = more consistent. Each dot = one race.</div>
+        <div class="chart-wrap" style="height:250px"><canvas id="distChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Tier Conversion Rate</div>
+        <div class="card-sub">% of all races landing in each tier</div>
+        <div class="chart-wrap" style="height:250px"><canvas id="rateChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- INSIGHTS -->
+    <div class="insights">
+      <div class="insight green">
+        <div class="insight-icon">📈</div>
+        <div class="insight-title">Qual Rate: 56% → 91%</div>
+        <div class="insight-body">Non-quals dropped from <strong>4 to 1</strong>. From coin-flip to near-certain.</div>
+      </div>
+      <div class="insight blue">
+        <div class="insight-icon">🏆</div>
+        <div class="insight-title">Podiums: 0% → 27%</div>
+        <div class="insight-body"><strong>3 podiums including a 1st place win.</strong> The ceiling moved.</div>
+      </div>
+      <div class="insight green">
+        <div class="insight-icon">📊</div>
+        <div class="insight-title">Typical finish: 15th → 6th</div>
+        <div class="insight-body">Median = "average day." <strong>That's a different athlete.</strong></div>
+      </div>
+      <div class="insight amber">
+        <div class="insight-icon">⚠️</div>
+        <div class="insight-title">Result spread: ignore the raw number</div>
+        <div class="insight-body">Looks wider in 25-26 only because of <strong>Pitztal 39</strong> — same outlier circuit as the 32 in 24-25. Strip it: 25-26 runs <strong>1–12</strong>.</div>
+      </div>
+      <div class="insight blue">
+        <div class="insight-icon">🎯</div>
+        <div class="insight-title">Top 10 rate: 33% → 73%</div>
+        <div class="insight-body">Floor AND ceiling moved. <strong>This isn't a hot streak</strong> — the whole baseline shifted.</div>
+      </div>
+    </div>
+
+    <!-- RACE TABLE -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:3px">Full Race Log — Nor-Am &amp; Europa Cup</div>
+      <div class="card-sub">Click column headers to sort</div>
+      <div class="table-wrap">
+        <table class="race-table">
+          <thead><tr>
+            <th onclick="sortT('noram',0)">Season ↕</th>
+            <th onclick="sortT('noram',1)">Date ↕</th>
+            <th onclick="sortT('noram',2)">Event ↕</th>
+            <th onclick="sortT('noram',3)">Location ↕</th>
+            <th onclick="sortT('noram',4)">Place ↕</th>
+            <th>Tier</th>
+          </tr></thead>
+          <tbody id="noramBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /tab-noram -->
+
+  <!-- ════════════════════════════════════════
+       TAB 2 — WORLD CUP
+  ════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-wc">
+
+    <div class="wc-note">
+      <strong>Context:</strong> World Cup is the FIS top-tier circuit — a separate and significantly more competitive field than Nor-Am. Results here reflect performance against the world's best.
+    </div>
+
+    <!-- WC KPI CARDS -->
+    <div class="kpi-row">
+      <div class="kpi blue">
+        <div class="kpi-label">Races (24-25)</div>
+        <div class="kpi-values"><span class="kpi-new" style="color:var(--orange)">4</span></div>
+        <div class="kpi-delta" style="color:var(--muted)">Cervinia, Montafon, MSA ×2</div>
+      </div>
+      <div class="kpi blue">
+        <div class="kpi-label">Races (25-26)</div>
+        <div class="kpi-values"><span class="kpi-new">3</span></div>
+        <div class="kpi-delta" style="color:var(--muted)">Dongbeiya ×2, Mt. St. Anne</div>
+      </div>
+      <div class="kpi green">
+        <div class="kpi-label">Best WC Finish</div>
+        <div class="kpi-values"><span class="kpi-new">16th</span><span style="font-size:13px;color:var(--muted)">24-25</span></div>
+        <div class="kpi-delta warn">Best was 23rd in 25-26</div>
+      </div>
+      <div class="kpi amber">
+        <div class="kpi-label">FIS Points (24-25)</div>
+        <div class="kpi-values"><span class="kpi-new" style="color:var(--orange);font-size:20px">242</span></div>
+        <div class="kpi-delta" style="color:var(--muted)">Total across season</div>
+      </div>
+      <div class="kpi blue">
+        <div class="kpi-label">FIS Points (25-26)</div>
+        <div class="kpi-values"><span class="kpi-new" style="font-size:20px">121.4</span></div>
+        <div class="kpi-delta warn">3 races vs 4 — fewer starts</div>
+      </div>
+      <div class="kpi green">
+        <div class="kpi-label">Cup Points (24-25)</div>
+        <div class="kpi-values"><span class="kpi-new" style="color:var(--orange);font-size:20px">27</span></div>
+        <div class="kpi-delta" style="color:var(--muted)">Scored in 2 of 4 races</div>
+      </div>
+      <div class="kpi blue">
+        <div class="kpi-label">Cup Points (25-26)</div>
+        <div class="kpi-values"><span class="kpi-new" style="font-size:20px">10</span></div>
+        <div class="kpi-delta" style="color:var(--muted)">Scored in 1 of 3 races</div>
+      </div>
+    </div>
+
+    <!-- WC CHARTS -->
+    <div class="chart-row-2" style="margin-bottom:var(--gap)">
+      <div class="card">
+        <div class="card-title">World Cup Finishing Positions</div>
+        <div class="card-sub">By race date — lower = better. Top 32 typically qualifies for finals bracket.</div>
+        <div class="chart-wrap" style="height:260px"><canvas id="wcLineChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">FIS Points per Race</div>
+        <div class="card-sub">Higher FIS points = better finish. Used for world rankings.</div>
+        <div class="chart-wrap" style="height:260px"><canvas id="wcFisChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- WC TABLE -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:3px">Full World Cup Race Log</div>
+      <div class="card-sub">Click column headers to sort</div>
+      <div class="table-wrap">
+        <table class="race-table">
+          <thead><tr>
+            <th onclick="sortT('wc',0)">Season ↕</th>
+            <th onclick="sortT('wc',1)">Date ↕</th>
+            <th onclick="sortT('wc',2)">Location ↕</th>
+            <th onclick="sortT('wc',3)">Country</th>
+            <th onclick="sortT('wc',4)">Position ↕</th>
+            <th onclick="sortT('wc',5)">FIS Points ↕</th>
+            <th onclick="sortT('wc',6)">Cup Points ↕</th>
+            <th>Tier</th>
+          </tr></thead>
+          <tbody id="wcBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- WC CONTEXT NOTE -->
+    <div class="insights" style="margin-top:var(--gap)">
+      <div class="insight amber">
+        <div class="insight-icon">📌</div>
+        <div class="insight-title">Fewer starts in 25-26</div>
+        <div class="insight-body">3 WC starts vs 4 in 24-25. Direct comparison is limited — <strong>per-race FIS avg is the fairer metric</strong>.</div>
+      </div>
+      <div class="insight blue">
+        <div class="insight-icon">💡</div>
+        <div class="insight-title">WC vs Nor-Am gap</div>
+        <div class="insight-body">World Cup fields are 50–80+ deep vs Nor-Am. A <strong>23rd at World Cup</strong> is a stronger result than it looks relative to the Nor-Am circuit.</div>
+      </div>
+      <div class="insight green">
+        <div class="insight-icon">📈</div>
+        <div class="insight-title">FIS pts per race: 60.5 → 40.5</div>
+        <div class="insight-body">Average per race is lower in 25-26, but <strong>23rd at Mt. St. Anne</strong> (home circuit) shows real WC competitiveness.</div>
+      </div>
+    </div>
+
+  </div><!-- /tab-wc -->
+
+  <footer>
+    Rose Savard-Ferguson &nbsp;·&nbsp; Snowboard Cross Performance Analytics &nbsp;·&nbsp; April 2026
+  </footer>
+
+</div><!-- /wrap -->
+
+<script>
+// ─────────────────────────────
+// CONSTANTS
+// ─────────────────────────────
+const C_BLUE   = "#2563eb";
+const C_ORANGE = "#ea580c";
+const C_RED    = "#dc2626";
+const C_GREEN  = "#16a34a";
+
+// ─────────────────────────────
+// NOR-AM DATA
+// ─────────────────────────────
+const NORAM = [
+  { season:"2025-26", date:"2025-11-27", event:"Europa Cup",    loc:"Pitztal",          place:39 },
+  { season:"2025-26", date:"2026-01-21", event:"Nor-Am Cup",    loc:"Sun Peaks",        place:4  },
+  { season:"2025-26", date:"2026-01-22", event:"Nor-Am Cup",    loc:"Sun Peaks",        place:9  },
+  { season:"2025-26", date:"2026-02-11", event:"Nor-Am Cup",    loc:"Gore Mountain",    place:1  },
+  { season:"2025-26", date:"2026-02-12", event:"Nor-Am Cup",    loc:"Gore Mountain",    place:6  },
+  { season:"2025-26", date:"2026-02-24", event:"Nor-Am Cup",    loc:"Horseshoe",        place:6  },
+  { season:"2025-26", date:"2026-02-25", event:"Nor-Am Cup",    loc:"Horseshoe",        place:5  },
+  { season:"2025-26", date:"2026-03-10", event:"Europa Cup",    loc:"St Moritz",        place:12 },
+  { season:"2025-26", date:"2026-03-13", event:"Junior Worlds", loc:"St Moritz",        place:12 },
+  { season:"2025-26", date:"2026-04-01", event:"Nor-Am Cup",    loc:"Mont Sainte-Anne", place:2  },
+  { season:"2025-26", date:"2026-04-02", event:"Nor-Am Cup",    loc:"Mont Sainte-Anne", place:3  },
+  { season:"2024-25", date:"2024-11-27", event:"Europa Cup",    loc:"Pitztal",          place:32 },
+  { season:"2024-25", date:"2025-01-04", event:"Nor-Am Cup",    loc:"Sun Peaks",        place:11 },
+  { season:"2024-25", date:"2025-01-05", event:"Nor-Am Cup",    loc:"Sun Peaks",        place:9  },
+  { season:"2024-25", date:"2025-02-03", event:"Nor-Am Cup",    loc:"Steamboat",        place:4  },
+  { season:"2024-25", date:"2025-02-04", event:"Nor-Am Cup",    loc:"Steamboat",        place:9  },
+  { season:"2024-25", date:"2025-02-28", event:"Nor-Am Cup",    loc:"Gore Mountain",    place:15 },
+  { season:"2024-25", date:"2025-03-13", event:"Europa Cup",    loc:"Lenk",             place:29 },
+  { season:"2024-25", date:"2025-03-14", event:"Europa Cup",    loc:"Lenk",             place:22 },
+  { season:"2024-25", date:"2025-04-12", event:"Junior Worlds", loc:"Isola 2000",       place:19 },
+];
+
+// ─────────────────────────────
+// WORLD CUP DATA
+// ─────────────────────────────
+const WC = [
+  { season:"2024-25", date:"2024-12-14", loc:"Cervinia",      country:"ITA", position:32, fisPoints:0,   cupPoints:1   },
+  { season:"2024-25", date:"2025-03-21", loc:"Montafon",      country:"AUT", position:34, fisPoints:22,  cupPoints:0   },
+  { season:"2024-25", date:"2025-04-05", loc:"Mt. St. Anne",  country:"CAN", position:16, fisPoints:150, cupPoints:17  },
+  { season:"2024-25", date:"2025-04-06", loc:"Mt. St. Anne",  country:"CAN", position:24, fisPoints:70,  cupPoints:9   },
+  { season:"2025-26", date:"2026-01-17", loc:"Dongbeiya",     country:"CHN", position:34, fisPoints:22,  cupPoints:0   },
+  { season:"2025-26", date:"2026-01-18", loc:"Dongbeiya",     country:"CHN", position:37, fisPoints:19.4,cupPoints:0   },
+  { season:"2025-26", date:"2026-03-28", loc:"Mt. St. Anne",  country:"CAN", position:23, fisPoints:80,  cupPoints:10  },
+];
+
+// ─────────────────────────────
+// HELPERS
+// ─────────────────────────────
+function placeLabel(p) { return p===1?"1st":p===2?"2nd":p===3?"3rd":`${p}th`; }
+function tier(p) {
+  if (p<=3)  return { label:"Podium",   cls:"place-pod" };
+  if (p<=5)  return { label:"Top 5",    cls:"place-5"   };
+  if (p<=10) return { label:"Top 10",   cls:"place-10"  };
+  if (p<=16) return { label:"Top 16",   cls:"place-16"  };
+  return            { label:"Non-Qual", cls:"place-out" };
+}
+function sr(s) { return NORAM.filter(r => r.season === s); }
+
+// ─────────────────────────────
+// TAB SWITCHING
+// ─────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ══════════════════════════════
+// 1. LINE CHART
+// ══════════════════════════════
+(function() {
+  const r24 = sr("2024-25"), r25 = sr("2025-26");
+  const maxLen = Math.max(r24.length, r25.length);
+  const labels = r25.map((_,i) => `R${i+1}`);
+  // pad 24-25 to same length
+  const d24 = r24.map(r=>r.place);
+  while (d24.length < labels.length) d24.push(null);
+
+  const cutoffPlugin = {
+    id:"cutoff", afterDraw(chart) {
+      const {ctx:c,chartArea:{left,right},scales} = chart;
+      if(!scales.y) return;
+      const y = scales.y.getPixelForValue(16);
+      c.save(); c.strokeStyle=C_RED; c.lineWidth=1.8; c.setLineDash([6,4]);
+      c.beginPath(); c.moveTo(left,y); c.lineTo(right,y); c.stroke();
+      c.fillStyle=C_RED; c.font="bold 10px system-ui"; c.setLineDash([]);
+      c.fillText("Qual Cutoff — 16th", right-112, y-4); c.restore();
+    }
+  };
+
+  new Chart(document.getElementById("lineChart").getContext("2d"), {
+    type:"line", plugins:[cutoffPlugin],
+    data:{
+      labels,
+      datasets:[
+        { label:"2024–25", data:d24, borderColor:C_ORANGE, backgroundColor:C_ORANGE+"15",
+          borderWidth:2.4, borderDash:[6,3], pointRadius:5, pointHoverRadius:8,
+          pointBackgroundColor:C_ORANGE, tension:0.3, fill:false, spanGaps:false },
+        { label:"2025–26", data:r25.map(r=>r.place), borderColor:C_BLUE, backgroundColor:C_BLUE+"12",
+          borderWidth:2.8, pointRadius:5, pointHoverRadius:8,
+          pointBackgroundColor:C_BLUE, tension:0.3, fill:false },
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:"index",intersect:false},
+      plugins:{
+        legend:{position:"top",labels:{usePointStyle:true,padding:18,font:{size:12}}},
+        tooltip:{callbacks:{label(ctx){
+          const p=ctx.parsed.y; if(p==null) return null;
+          return ` ${ctx.dataset.label}: ${placeLabel(p)}  (${tier(p).label})`;
+        }}}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{color:"#6b7280",font:{size:11}}},
+        y:{reverse:true,min:1,max:42,grid:{color:"#f0f0f0"},
+           ticks:{color:"#6b7280",font:{size:11},stepSize:5,
+             callback:v=>v===1?"1st":v===5?"5th":v===10?"10th":v===16?"16th":v===20?"20th":v===25?"25th":v===30?"30th":v===35?"35th":v===40?"40th":null}}
+      }
+    }
+  });
+})();
+
+// ══════════════════════════════
+// 2. BAR CHART — with correct % improvement labels
+// ══════════════════════════════
+(function() {
+  const r24 = sr("2024-25"), r25 = sr("2025-26");
+  const cnt = (races,max) => races.filter(r=>r.place<=max).length;
+  const v24 = [cnt(r24,3), cnt(r24,5), cnt(r24,10), cnt(r24,16)];
+  const v25 = [cnt(r25,3), cnt(r25,5), cnt(r25,10), cnt(r25,16)];
+
+  // correct improvement labels above 25-26 bars
+  // Podium: 0→3 = undefined (show "+3 NEW"), Top5: 1→5=+400%, Top10: 3→8=+167%, Top16: 5→10=+100%
+  const improvLabels = ["+3 NEW", "+400%", "+167%", "+100%"];
+
+  const barLabelPlugin = {
+    id:"barLabels",
+    afterDatasetsDraw(chart) {
+      const {ctx:c} = chart;
+      chart.data.datasets.forEach((ds,di) => {
+        const total = di===0 ? r24.length : r25.length;
+        const meta  = chart.getDatasetMeta(di);
+        meta.data.forEach((bar,i) => {
+          const val = ds.data[i];
+          const pct = Math.round(val/total*100);
+          c.save();
+          if (di===0) {
+            // 24-25: show count (pct%)
+            c.fillStyle = C_ORANGE; c.font="10px system-ui";
+            c.textAlign="center"; c.textBaseline="bottom";
+            c.fillText(`${val} (${pct}%)`, bar.x, bar.y-3);
+          } else {
+            // 25-26: show count (pct%) and improvement above
+            c.fillStyle = C_BLUE; c.font="bold 10px system-ui";
+            c.textAlign="center"; c.textBaseline="bottom";
+            c.fillText(`${val} (${pct}%)`, bar.x, bar.y-3);
+            // improvement badge
+            c.fillStyle = C_GREEN; c.font="bold 9px system-ui";
+            c.fillText(improvLabels[i], bar.x, bar.y-15);
+          }
+          c.restore();
+        });
+      });
+    }
+  };
+
+  new Chart(document.getElementById("barChart").getContext("2d"), {
+    type:"bar", plugins:[barLabelPlugin],
+    data:{
+      labels:["Podium","Top 5","Top 10","Top 16"],
+      datasets:[
+        {label:"2024–25",data:v24,backgroundColor:C_ORANGE+"88",borderColor:C_ORANGE,borderWidth:1.5,borderRadius:5},
+        {label:"2025–26",data:v25,backgroundColor:C_BLUE+"88",  borderColor:C_BLUE,  borderWidth:1.5,borderRadius:5},
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:"index",intersect:false},
+      layout:{padding:{top:28}},
+      plugins:{
+        legend:{position:"top",labels:{usePointStyle:true,font:{size:12},padding:16}},
+        tooltip:{callbacks:{label(ctx){
+          const n=ctx.parsed.y, total=ctx.datasetIndex===0?r24.length:r25.length;
+          return ` ${ctx.dataset.label}: ${n} races (${Math.round(n/total*100)}%)`;
+        }}}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{color:"#6b7280",font:{size:11}}},
+        y:{beginAtZero:true,max:14,grid:{color:"#f0f0f0"},ticks:{color:"#6b7280",font:{size:11},stepSize:2}}
+      }
+    }
+  });
+})();
+
+// ══════════════════════════════
+// 3. DISTRIBUTION SCATTER
+// ══════════════════════════════
+(function() {
+  const r24 = sr("2024-25").map(r=>r.place);
+  const r25 = sr("2025-26").map(r=>r.place);
+  function jitter(results,xBase){
+    return results.map((p,i)=>({x:xBase+(i-results.length/2)*0.09,y:p}));
+  }
+  const cutoffPlugin={id:"distCutoff",afterDraw(chart){
+    const{ctx:c,chartArea:{left,right},scales}=chart; if(!scales.y) return;
+    const y=scales.y.getPixelForValue(16);
+    c.save();c.strokeStyle=C_RED;c.lineWidth=1.5;c.setLineDash([5,4]);
+    c.beginPath();c.moveTo(left,y);c.lineTo(right,y);c.stroke();c.restore();
+  }};
+
+  new Chart(document.getElementById("distChart").getContext("2d"),{
+    type:"scatter", plugins:[cutoffPlugin],
+    data:{datasets:[
+      {label:"2024–25",data:jitter(r24,1),backgroundColor:C_ORANGE+"bb",borderColor:C_ORANGE,borderWidth:1,pointRadius:7,pointHoverRadius:10},
+      {label:"2025–26",data:jitter(r25,2),backgroundColor:C_BLUE+"bb",  borderColor:C_BLUE,  borderWidth:1,pointRadius:7,pointHoverRadius:10},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:"top",labels:{usePointStyle:true,font:{size:12},padding:16}},
+        tooltip:{callbacks:{label(ctx){const p=ctx.parsed.y;return ` ${ctx.dataset.label}: ${placeLabel(p)}`;}}},
+      },
+      scales:{
+        x:{min:0.4,max:2.6,grid:{display:false},ticks:{stepSize:1,callback:v=>v===1?"2024–25":v===2?"2025–26":null,color:"#374151",font:{size:12,weight:"bold"}}},
+        y:{reverse:true,min:1,max:42,grid:{color:"#f0f0f0"},ticks:{stepSize:5,callback:v=>v===1?"1st":v===5?"5th":v===10?"10th":v===16?"16th":v===20?"20th":v===30?"30th":v===40?"40th":null,color:"#6b7280",font:{size:11}}},
+      }
+    }
+  });
+})();
+
+// ══════════════════════════════
+// 4. RATE CHART (horizontal %)
+// ══════════════════════════════
+(function() {
+  const r24=sr("2024-25"), r25=sr("2025-26");
+  const pct=(races,max)=>Math.round(races.filter(r=>r.place<=max).length/races.length*100);
+
+  const rateLabelPlugin={id:"rateLabels",afterDatasetsDraw(chart){
+    const{ctx:c}=chart;
+    chart.data.datasets.forEach((ds,di)=>{
+      const meta=chart.getDatasetMeta(di);
+      meta.data.forEach((bar,i)=>{
+        const val=ds.data[i]; if(!val) return;
+        c.save(); c.fillStyle=di===0?C_ORANGE:C_BLUE; c.font="bold 10px system-ui";
+        c.textAlign="left"; c.textBaseline="middle";
+        c.fillText(`${val}%`,bar.x+5,bar.y); c.restore();
+      });
+    });
+  }};
+
+  new Chart(document.getElementById("rateChart").getContext("2d"),{
+    type:"bar", plugins:[rateLabelPlugin],
+    data:{
+      labels:["Podium","Top 5","Top 10","Qual (Top 16)"],
+      datasets:[
+        {label:"2024–25",data:[pct(r24,3),pct(r24,5),pct(r24,10),pct(r24,16)],backgroundColor:C_ORANGE+"88",borderColor:C_ORANGE,borderWidth:1.5,borderRadius:5},
+        {label:"2025–26",data:[pct(r25,3),pct(r25,5),pct(r25,10),pct(r25,16)],backgroundColor:C_BLUE+"88",  borderColor:C_BLUE,  borderWidth:1.5,borderRadius:5},
+      ]
+    },
+    options:{
+      indexAxis:"y", responsive:true, maintainAspectRatio:false,
+      layout:{padding:{right:40}},
+      plugins:{
+        legend:{position:"top",labels:{usePointStyle:true,font:{size:12},padding:16}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.x}%`}}
+      },
+      scales:{
+        x:{beginAtZero:true,max:110,ticks:{callback:v=>v<=100?v+"%":null,color:"#6b7280",font:{size:11}},grid:{color:"#f0f0f0"}},
+        y:{ticks:{color:"#374151",font:{size:11}},grid:{display:false}}
+      }
+    }
+  });
+})();
+
+// ══════════════════════════════
+// 5. WC LINE CHART
+// ══════════════════════════════
+(function() {
+  const wc24 = WC.filter(r=>r.season==="2024-25");
+  const wc25 = WC.filter(r=>r.season==="2025-26");
+  const labels24 = wc24.map(r=>r.loc.split(" ")[0]+(wc24.filter(x=>x.loc===r.loc).length>1?` (${wc24.filter(x=>x.loc===r.loc&&x.date<=r.date).length})`:``));
+  const labels25 = wc25.map(r=>r.loc.split(" ")[0]+(wc25.filter(x=>x.loc===r.loc).length>1?` (${wc25.filter(x=>x.loc===r.loc&&x.date<=r.date).length})`:``));
+
+  const cutoffPlugin={id:"wcCutoff",afterDraw(chart){
+    const{ctx:c,chartArea:{left,right},scales}=chart; if(!scales.y) return;
+    const y=scales.y.getPixelForValue(32);
+    c.save();c.strokeStyle="#6b7280";c.lineWidth=1.4;c.setLineDash([4,4]);
+    c.beginPath();c.moveTo(left,y);c.lineTo(right,y);c.stroke();
+    c.fillStyle="#6b7280";c.font="10px system-ui";c.fillText("~Top 32 bracket",right-108,y-4);
+    c.restore();
+  }};
+
+  const maxL = Math.max(wc24.length,wc25.length);
+  const allLabels = Array.from({length:maxL},(_,i)=>`Race ${i+1}`);
+  const d24=wc24.map(r=>r.position), d25=wc25.map(r=>r.position);
+
+  new Chart(document.getElementById("wcLineChart").getContext("2d"),{
+    type:"line", plugins:[cutoffPlugin],
+    data:{
+      labels:allLabels,
+      datasets:[
+        {label:"2024–25",data:d24,borderColor:C_ORANGE,backgroundColor:C_ORANGE+"18",borderWidth:2.4,borderDash:[6,3],pointRadius:6,pointHoverRadius:9,pointBackgroundColor:C_ORANGE,tension:0.3,fill:false,spanGaps:false},
+        {label:"2025–26",data:d25,borderColor:C_BLUE,  backgroundColor:C_BLUE+"12",  borderWidth:2.8,pointRadius:6,pointHoverRadius:9,pointBackgroundColor:C_BLUE,  tension:0.3,fill:false},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:"index",intersect:false},
+      plugins:{
+        legend:{position:"top",labels:{usePointStyle:true,padding:16,font:{size:12}}},
+        tooltip:{callbacks:{label(ctx){const p=ctx.parsed.y;if(p==null)return null;return ` ${ctx.dataset.label}: ${placeLabel(p)}`;}}},
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{color:"#6b7280",font:{size:11}}},
+        y:{reverse:true,min:1,max:42,grid:{color:"#f0f0f0"},ticks:{stepSize:5,callback:v=>v===1?"1st":v===5?"5th":v===10?"10th":v===16?"16th":v===20?"20th":v===25?"25th":v===30?"30th":v===35?"35th":v===40?"40th":null,color:"#6b7280",font:{size:11}}},
+      }
+    }
+  });
+})();
+
+// ══════════════════════════════
+// 6. WC FIS POINTS CHART
+// ══════════════════════════════
+(function() {
+  const wc24 = WC.filter(r=>r.season==="2024-25");
+  const wc25 = WC.filter(r=>r.season==="2025-26");
+
+  new Chart(document.getElementById("wcFisChart").getContext("2d"),{
+    type:"bar",
+    data:{
+      labels:WC.map(r=>`${r.loc.split(" ")[0]} (${r.season.slice(2,4)})`),
+      datasets:[{
+        label:"FIS Points",
+        data:WC.map(r=>r.fisPoints),
+        backgroundColor:WC.map(r=>r.season==="2025-26"?C_BLUE+"99":C_ORANGE+"99"),
+        borderColor:WC.map(r=>r.season==="2025-26"?C_BLUE:C_ORANGE),
+        borderWidth:1.5, borderRadius:5,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label(ctx){return ` FIS Points: ${ctx.parsed.y} (${WC[ctx.dataIndex].season})`;}}},
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{color:"#6b7280",font:{size:10},maxRotation:30}},
+        y:{beginAtZero:true,grid:{color:"#f0f0f0"},ticks:{color:"#6b7280",font:{size:11}},title:{display:true,text:"FIS Points",color:"#6b7280",font:{size:11}}},
+      }
+    }
+  });
+})();
+
+// ══════════════════════════════
+// TABLES
+// ══════════════════════════════
+const tableState = { noram:{ data:[...NORAM].sort((a,b)=>a.date.localeCompare(b.date)), col:-1, dir:1 },
+                     wc:   { data:[...WC].sort((a,b)=>a.date.localeCompare(b.date)),    col:-1, dir:1 } };
+
+function renderNoramTable() {
+  document.getElementById("noramBody").innerHTML = tableState.noram.data.map(r=>{
+    const t=tier(r.place), sc=r.season==="2025-26"?"badge-26":"badge-25";
+    return `<tr>
+      <td><span class="badge ${sc}">${r.season}</span></td>
+      <td>${r.date.replace(/-/g,"\u2011")}</td>
+      <td>${r.event}</td>
+      <td>${r.loc}</td>
+      <td style="font-weight:700">${placeLabel(r.place)}</td>
+      <td><span class="badge ${t.cls}">${t.label}</span></td>
+    </tr>`;
+  }).join("");
+}
+
+function renderWcTable() {
+  document.getElementById("wcBody").innerHTML = tableState.wc.data.map(r=>{
+    const t=tier(r.position), sc=r.season==="2025-26"?"badge-26":"badge-25";
+    return `<tr>
+      <td><span class="badge ${sc}">${r.season}</span></td>
+      <td>${r.date.replace(/-/g,"\u2011")}</td>
+      <td>${r.loc}</td>
+      <td>${r.country}</td>
+      <td style="font-weight:700">${placeLabel(r.position)}</td>
+      <td class="fis-pts">${r.fisPoints > 0 ? r.fisPoints.toFixed(1) : "—"}</td>
+      <td>${r.cupPoints > 0 ? r.cupPoints.toFixed(2) : "—"}</td>
+      <td><span class="badge ${t.cls}">${t.label}</span></td>
+    </tr>`;
+  }).join("");
+}
+
+function sortT(tab, col) {
+  const s = tableState[tab];
+  if (s.col===col) s.dir*=-1; else { s.col=col; s.dir=1; }
+  const keys = tab==="noram"
+    ? ["season","date","event","loc","place"]
+    : ["season","date","loc","country","position","fisPoints","cupPoints"];
+  const key = keys[col];
+  s.data.sort((a,b)=>{
+    const av=a[key]??0, bv=b[key]??0;
+    return (av<bv?-1:av>bv?1:0)*s.dir;
+  });
+  if(tab==="noram") renderNoramTable(); else renderWcTable();
+}
+
+renderNoramTable();
+renderWcTable();
+</script>
+</body>
+</html>
