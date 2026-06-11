@@ -161,6 +161,27 @@
                padding: 12px 16px; margin-bottom: var(--gap); font-size: 12.5px; color: #92400e; }
     .wc-note strong { font-weight: 700; }
     .fis-pts { font-weight: 600; color: var(--blue); }
+    /* ── STANDINGS HERO ── */
+    .standings-hero {
+      background: linear-gradient(135deg, #111827 0%, #1e293b 100%);
+      border-radius: var(--r); padding: 22px 28px; margin-bottom: var(--gap);
+      box-shadow: var(--shadow); display: flex; align-items: center;
+      justify-content: space-between; gap: 24px; flex-wrap: wrap;
+    }
+    .sh-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+                color: #9ca3af; margin-bottom: 6px; }
+    .sh-title { font-size: 16px; font-weight: 700; color: #fff; }
+    .sh-title span { color: #9ca3af; font-weight: 400; font-size: 13px; }
+    .sh-stat { display: flex; align-items: center; gap: 20px; }
+    .sh-num { text-align: center; }
+    .sh-num .pos { font-size: 40px; font-weight: 800; line-height: 1; }
+    .sh-num .pos.old { color: #6b7280; }
+    .sh-num .pos.new { color: #4ade80; }
+    .sh-num .yr  { font-size: 11px; color: #9ca3af; margin-top: 5px; letter-spacing: .5px; }
+    .sh-arrow { font-size: 26px; color: #4ade80; font-weight: 800; }
+    .sh-delta { background: rgba(22,163,74,.18); color: #4ade80;
+                font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 20px; }
+    @media (max-width: 640px) { .standings-hero { flex-direction: column; align-items: flex-start; } }
     /* ── FOOTER ── */
     footer { text-align: center; font-size: 11px; color: var(--muted); padding: 16px 0 8px; }
     /* ── RESPONSIVE ── */
@@ -203,6 +224,19 @@
        TAB 1 — NOR-AM / EUROPA CUP
   ════════════════════════════════════════ -->
   <div class="tab-panel active" id="tab-noram">
+    <!-- OVERALL STANDINGS HERO -->
+    <div class="standings-hero">
+      <div>
+        <div class="sh-label">Overall Season Standing</div>
+        <div class="sh-title">Nor-Am Cup — North American Standings <span>· final overall position</span></div>
+      </div>
+      <div class="sh-stat">
+        <div class="sh-num"><div class="pos old">14th</div><div class="yr">2024–25</div></div>
+        <div class="sh-arrow">→</div>
+        <div class="sh-num"><div class="pos new">2nd</div><div class="yr">2025–26</div></div>
+        <div class="sh-delta">▲ +12 places</div>
+      </div>
+    </div>
     <!-- KPI CARDS -->
     <div class="kpi-row">
       <div class="kpi blue">
