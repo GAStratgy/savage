@@ -25,10 +25,45 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
            background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
-
+    /* ── PASSWORD GATE ── */
+    #gate {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #0f1623;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    #gate.hidden { display: none; }
+    .gate-box {
+      width: 100%; max-width: 520px; text-align: center;
+    }
+    .gate-eyebrow {
+      font-size: 13px; font-weight: 700; letter-spacing: 4px;
+      text-transform: uppercase; color: #6b7280; margin-bottom: 22px;
+    }
+    .gate-box h2 {
+      font-size: 38px; font-weight: 800; color: #fff;
+      letter-spacing: -.5px; margin-bottom: 16px; line-height: 1.1;
+    }
+    .gate-box p  { font-size: 16px; color: #8b94a3; margin-bottom: 34px; }
+    .gate-box input {
+      width: 100%; padding: 18px 20px; font-size: 17px;
+      background: #1c2533; color: #fff;
+      border: 1.5px solid #2c3849; border-radius: 12px;
+      outline: none; transition: border-color .15s; text-align: center;
+    }
+    .gate-box input::placeholder { color: #6b7280; letter-spacing: .5px; }
+    .gate-box input:focus { border-color: #6d5acd; }
+    .gate-box button {
+      width: 100%; margin-top: 14px; padding: 18px 20px;
+      background: #6d5acd; color: #fff; border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      cursor: pointer; transition: background .15s;
+    }
+    .gate-box button:hover { background: #5d49bd; }
+    .gate-footer { font-size: 13px; color: #4b5563; margin-top: 40px; }
+    .gate-err { color: #f87171; font-size: 13px; margin-top: 14px; min-height: 16px; }
     /* ── WRAP ── */
     .wrap { max-width: 1300px; margin: 0 auto; padding: 20px var(--gap); }
-
     /* ── HEADER ── */
     header {
       background: var(--header); border-radius: var(--r);
@@ -43,7 +78,6 @@
     .pill-line-dash  { width: 26px; height: 3px; border-top: 3px dashed var(--orange); }
     .pill-line-solid { width: 26px; height: 3px; background: var(--blue); border-radius: 2px; }
     .pill-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-
     /* ── TABS ── */
     .tab-nav {
       display: flex; gap: 4px; margin-bottom: var(--gap);
@@ -59,7 +93,6 @@
     .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); background: #eff6ff; }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
-
     /* ── KPI ROW ── */
     .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
                gap: var(--gap); margin-bottom: var(--gap); }
@@ -78,7 +111,6 @@
     .up   { color: var(--green); }
     .down { color: var(--danger); }
     .warn { color: var(--amber); }
-
     /* ── CHART LAYOUT ── */
     .chart-row   { display: grid; grid-template-columns: 2fr 1fr; gap: var(--gap); margin-bottom: var(--gap); }
     .chart-row-2 { display: grid; grid-template-columns: 1fr 1fr;  gap: var(--gap); margin-bottom: var(--gap); }
@@ -90,7 +122,6 @@
     .cutoff-badge { display: inline-block; background: #fee2e2; color: var(--danger);
                     font-size: 10px; font-weight: 700; letter-spacing: .4px;
                     padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
-
     /* ── INSIGHTS ── */
     .insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
                 gap: var(--gap); margin-bottom: var(--gap); }
@@ -104,7 +135,6 @@
                      text-transform: uppercase; letter-spacing: .4px; }
     .insight-body  { font-size: 12px; color: var(--muted); line-height: 1.5; }
     .insight-body strong { color: var(--text); }
-
     /* ── TABLE ── */
     .table-wrap { overflow-x: auto; }
     .race-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -126,24 +156,32 @@
     .place-10  { background: #dbeafe; color: #1e40af; font-weight: 700; }
     .place-16  { background: #f3f4f6; color: #374151; }
     .place-out { background: #fee2e2; color: var(--danger); font-weight: 700; }
-
     /* ── WC SPECIFIC ── */
     .wc-note { background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--r);
                padding: 12px 16px; margin-bottom: var(--gap); font-size: 12.5px; color: #92400e; }
     .wc-note strong { font-weight: 700; }
     .fis-pts { font-weight: 600; color: var(--blue); }
-
     /* ── FOOTER ── */
     footer { text-align: center; font-size: 11px; color: var(--muted); padding: 16px 0 8px; }
-
     /* ── RESPONSIVE ── */
     @media (max-width: 860px) { .chart-row, .chart-row-2 { grid-template-columns: 1fr; } }
     @media (max-width: 600px) { .kpi-row { grid-template-columns: repeat(2,1fr); } }
   </style>
 </head>
 <body>
-<div class="wrap">
-
+<!-- PASSWORD GATE -->
+<div id="gate">
+  <div class="gate-box">
+    <div class="gate-eyebrow">Grey Area Strategy</div>
+    <h2>SBX Performance Dashboard</h2>
+    <p>Rose Savard-Ferguson · Season Analysis · CONFIDENTIAL</p>
+    <input type="password" id="gate-input" placeholder="Enter access code" autocomplete="off" autofocus>
+    <button onclick="checkGate()">Access Dashboard</button>
+    <div class="gate-err" id="gate-err"></div>
+    <div class="gate-footer">greyareatraining.com</div>
+  </div>
+</div>
+<div class="wrap" id="dashboard" style="display:none">
   <!-- HEADER -->
   <header>
     <div class="hd-left">
@@ -156,18 +194,15 @@
       <div class="pill"><div class="pill-dot" style="background:var(--danger)"></div> Qual Cutoff @ 16th</div>
     </div>
   </header>
-
   <!-- TABS -->
   <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('noram')">Nor-Am &amp; Europa Cup</button>
     <button class="tab-btn" onclick="switchTab('wc')">World Cup</button>
   </div>
-
   <!-- ════════════════════════════════════════
        TAB 1 — NOR-AM / EUROPA CUP
   ════════════════════════════════════════ -->
   <div class="tab-panel active" id="tab-noram">
-
     <!-- KPI CARDS -->
     <div class="kpi-row">
       <div class="kpi blue">
@@ -206,7 +241,6 @@
         <div class="kpi-delta up">▼ 75% reduction</div>
       </div>
     </div>
-
     <!-- CHARTS ROW 1 -->
     <div class="chart-row">
       <div class="card">
@@ -220,7 +254,6 @@
         <div class="chart-wrap" style="height:295px"><canvas id="barChart"></canvas></div>
       </div>
     </div>
-
     <!-- CHARTS ROW 2 -->
     <div class="chart-row-2">
       <div class="card">
@@ -234,7 +267,6 @@
         <div class="chart-wrap" style="height:250px"><canvas id="rateChart"></canvas></div>
       </div>
     </div>
-
     <!-- INSIGHTS -->
     <div class="insights">
       <div class="insight green">
@@ -263,7 +295,6 @@
         <div class="insight-body">Floor AND ceiling moved. <strong>This isn't a hot streak</strong> — the whole baseline shifted.</div>
       </div>
     </div>
-
     <!-- RACE TABLE -->
     <div class="card">
       <div class="card-title" style="margin-bottom:3px">Full Race Log — Nor-Am &amp; Europa Cup</div>
@@ -282,18 +313,14 @@
         </table>
       </div>
     </div>
-
   </div><!-- /tab-noram -->
-
   <!-- ════════════════════════════════════════
        TAB 2 — WORLD CUP
   ════════════════════════════════════════ -->
   <div class="tab-panel" id="tab-wc">
-
     <div class="wc-note">
       <strong>Context:</strong> World Cup is the FIS top-tier circuit — a separate and significantly more competitive field than Nor-Am. Results here reflect performance against the world's best.
     </div>
-
     <!-- WC KPI CARDS -->
     <div class="kpi-row">
       <div class="kpi blue">
@@ -332,7 +359,6 @@
         <div class="kpi-delta" style="color:var(--muted)">Scored in 1 of 3 races</div>
       </div>
     </div>
-
     <!-- WC CHARTS -->
     <div class="chart-row-2" style="margin-bottom:var(--gap)">
       <div class="card">
@@ -346,7 +372,6 @@
         <div class="chart-wrap" style="height:260px"><canvas id="wcFisChart"></canvas></div>
       </div>
     </div>
-
     <!-- WC TABLE -->
     <div class="card">
       <div class="card-title" style="margin-bottom:3px">Full World Cup Race Log</div>
@@ -367,7 +392,6 @@
         </table>
       </div>
     </div>
-
     <!-- WC CONTEXT NOTE -->
     <div class="insights" style="margin-top:var(--gap)">
       <div class="insight amber">
@@ -386,16 +410,35 @@
         <div class="insight-body">Average per race is lower in 25-26, but <strong>23rd at Mt. St. Anne</strong> (home circuit) shows real WC competitiveness.</div>
       </div>
     </div>
-
   </div><!-- /tab-wc -->
-
   <footer>
     Rose Savard-Ferguson &nbsp;·&nbsp; Snowboard Cross Performance Analytics &nbsp;·&nbsp; April 2026
   </footer>
-
 </div><!-- /wrap -->
-
 <script>
+// ─────────────────────────────
+// PASSWORD GATE
+// ─────────────────────────────
+const GATE_PASSWORD = "rose";
+function unlockDashboard() {
+  document.getElementById("gate").classList.add("hidden");
+  document.getElementById("dashboard").style.display = "block";
+  if (!window.__chartsInit) { window.__chartsInit = true; initDashboard(); }
+  window.dispatchEvent(new Event("resize"));
+}
+function checkGate() {
+  const val = document.getElementById("gate-input").value;
+  if (val === GATE_PASSWORD) {
+    unlockDashboard();
+  } else {
+    document.getElementById("gate-err").textContent = "Incorrect password. Try again.";
+    document.getElementById("gate-input").value = "";
+    document.getElementById("gate-input").focus();
+  }
+}
+document.getElementById("gate-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") checkGate();
+});
 // ─────────────────────────────
 // CONSTANTS
 // ─────────────────────────────
@@ -403,7 +446,6 @@ const C_BLUE   = "#2563eb";
 const C_ORANGE = "#ea580c";
 const C_RED    = "#dc2626";
 const C_GREEN  = "#16a34a";
-
 // ─────────────────────────────
 // NOR-AM DATA
 // ─────────────────────────────
@@ -429,7 +471,6 @@ const NORAM = [
   { season:"2024-25", date:"2025-03-14", event:"Europa Cup",    loc:"Lenk",             place:22 },
   { season:"2024-25", date:"2025-04-12", event:"Junior Worlds", loc:"Isola 2000",       place:19 },
 ];
-
 // ─────────────────────────────
 // WORLD CUP DATA
 // ─────────────────────────────
@@ -442,7 +483,6 @@ const WC = [
   { season:"2025-26", date:"2026-01-18", loc:"Dongbeiya",     country:"CHN", position:37, fisPoints:19.4,cupPoints:0   },
   { season:"2025-26", date:"2026-03-28", loc:"Mt. St. Anne",  country:"CAN", position:23, fisPoints:80,  cupPoints:10  },
 ];
-
 // ─────────────────────────────
 // HELPERS
 // ─────────────────────────────
@@ -455,7 +495,6 @@ function tier(p) {
   return            { label:"Non-Qual", cls:"place-out" };
 }
 function sr(s) { return NORAM.filter(r => r.season === s); }
-
 // ─────────────────────────────
 // TAB SWITCHING
 // ─────────────────────────────
@@ -465,7 +504,10 @@ function switchTab(id) {
   document.getElementById('tab-' + id).classList.add('active');
   event.target.classList.add('active');
 }
-
+// ══════════════════════════════
+// DASHBOARD INIT — charts + tables (runs after unlock)
+// ══════════════════════════════
+function initDashboard() {
 // ══════════════════════════════
 // 1. LINE CHART
 // ══════════════════════════════
@@ -476,7 +518,6 @@ function switchTab(id) {
   // pad 24-25 to same length
   const d24 = r24.map(r=>r.place);
   while (d24.length < labels.length) d24.push(null);
-
   const cutoffPlugin = {
     id:"cutoff", afterDraw(chart) {
       const {ctx:c,chartArea:{left,right},scales} = chart;
@@ -488,7 +529,6 @@ function switchTab(id) {
       c.fillText("Qual Cutoff — 16th", right-112, y-4); c.restore();
     }
   };
-
   new Chart(document.getElementById("lineChart").getContext("2d"), {
     type:"line", plugins:[cutoffPlugin],
     data:{
@@ -521,7 +561,6 @@ function switchTab(id) {
     }
   });
 })();
-
 // ══════════════════════════════
 // 2. BAR CHART — with correct % improvement labels
 // ══════════════════════════════
@@ -530,11 +569,9 @@ function switchTab(id) {
   const cnt = (races,max) => races.filter(r=>r.place<=max).length;
   const v24 = [cnt(r24,3), cnt(r24,5), cnt(r24,10), cnt(r24,16)];
   const v25 = [cnt(r25,3), cnt(r25,5), cnt(r25,10), cnt(r25,16)];
-
   // correct improvement labels above 25-26 bars
   // Podium: 0→3 = undefined (show "+3 NEW"), Top5: 1→5=+400%, Top10: 3→8=+167%, Top16: 5→10=+100%
   const improvLabels = ["+3 NEW", "+400%", "+167%", "+100%"];
-
   const barLabelPlugin = {
     id:"barLabels",
     afterDatasetsDraw(chart) {
@@ -565,7 +602,6 @@ function switchTab(id) {
       });
     }
   };
-
   new Chart(document.getElementById("barChart").getContext("2d"), {
     type:"bar", plugins:[barLabelPlugin],
     data:{
@@ -593,7 +629,6 @@ function switchTab(id) {
     }
   });
 })();
-
 // ══════════════════════════════
 // 3. DISTRIBUTION SCATTER
 // ══════════════════════════════
@@ -609,7 +644,6 @@ function switchTab(id) {
     c.save();c.strokeStyle=C_RED;c.lineWidth=1.5;c.setLineDash([5,4]);
     c.beginPath();c.moveTo(left,y);c.lineTo(right,y);c.stroke();c.restore();
   }};
-
   new Chart(document.getElementById("distChart").getContext("2d"),{
     type:"scatter", plugins:[cutoffPlugin],
     data:{datasets:[
@@ -629,14 +663,12 @@ function switchTab(id) {
     }
   });
 })();
-
 // ══════════════════════════════
 // 4. RATE CHART (horizontal %)
 // ══════════════════════════════
 (function() {
   const r24=sr("2024-25"), r25=sr("2025-26");
   const pct=(races,max)=>Math.round(races.filter(r=>r.place<=max).length/races.length*100);
-
   const rateLabelPlugin={id:"rateLabels",afterDatasetsDraw(chart){
     const{ctx:c}=chart;
     chart.data.datasets.forEach((ds,di)=>{
@@ -649,7 +681,6 @@ function switchTab(id) {
       });
     });
   }};
-
   new Chart(document.getElementById("rateChart").getContext("2d"),{
     type:"bar", plugins:[rateLabelPlugin],
     data:{
@@ -673,7 +704,6 @@ function switchTab(id) {
     }
   });
 })();
-
 // ══════════════════════════════
 // 5. WC LINE CHART
 // ══════════════════════════════
@@ -682,7 +712,6 @@ function switchTab(id) {
   const wc25 = WC.filter(r=>r.season==="2025-26");
   const labels24 = wc24.map(r=>r.loc.split(" ")[0]+(wc24.filter(x=>x.loc===r.loc).length>1?` (${wc24.filter(x=>x.loc===r.loc&&x.date<=r.date).length})`:``));
   const labels25 = wc25.map(r=>r.loc.split(" ")[0]+(wc25.filter(x=>x.loc===r.loc).length>1?` (${wc25.filter(x=>x.loc===r.loc&&x.date<=r.date).length})`:``));
-
   const cutoffPlugin={id:"wcCutoff",afterDraw(chart){
     const{ctx:c,chartArea:{left,right},scales}=chart; if(!scales.y) return;
     const y=scales.y.getPixelForValue(32);
@@ -691,11 +720,9 @@ function switchTab(id) {
     c.fillStyle="#6b7280";c.font="10px system-ui";c.fillText("~Top 32 bracket",right-108,y-4);
     c.restore();
   }};
-
   const maxL = Math.max(wc24.length,wc25.length);
   const allLabels = Array.from({length:maxL},(_,i)=>`Race ${i+1}`);
   const d24=wc24.map(r=>r.position), d25=wc25.map(r=>r.position);
-
   new Chart(document.getElementById("wcLineChart").getContext("2d"),{
     type:"line", plugins:[cutoffPlugin],
     data:{
@@ -719,14 +746,12 @@ function switchTab(id) {
     }
   });
 })();
-
 // ══════════════════════════════
 // 6. WC FIS POINTS CHART
 // ══════════════════════════════
 (function() {
   const wc24 = WC.filter(r=>r.season==="2024-25");
   const wc25 = WC.filter(r=>r.season==="2025-26");
-
   new Chart(document.getElementById("wcFisChart").getContext("2d"),{
     type:"bar",
     data:{
@@ -752,19 +777,18 @@ function switchTab(id) {
     }
   });
 })();
-
+} // end initDashboard
 // ══════════════════════════════
 // TABLES
 // ══════════════════════════════
 const tableState = { noram:{ data:[...NORAM].sort((a,b)=>a.date.localeCompare(b.date)), col:-1, dir:1 },
                      wc:   { data:[...WC].sort((a,b)=>a.date.localeCompare(b.date)),    col:-1, dir:1 } };
-
 function renderNoramTable() {
   document.getElementById("noramBody").innerHTML = tableState.noram.data.map(r=>{
     const t=tier(r.place), sc=r.season==="2025-26"?"badge-26":"badge-25";
     return `<tr>
       <td><span class="badge ${sc}">${r.season}</span></td>
-      <td>${r.date.replace(/-/g,"\u2011")}</td>
+      <td>${r.date.replace(/-/g,"‑")}</td>
       <td>${r.event}</td>
       <td>${r.loc}</td>
       <td style="font-weight:700">${placeLabel(r.place)}</td>
@@ -772,13 +796,12 @@ function renderNoramTable() {
     </tr>`;
   }).join("");
 }
-
 function renderWcTable() {
   document.getElementById("wcBody").innerHTML = tableState.wc.data.map(r=>{
     const t=tier(r.position), sc=r.season==="2025-26"?"badge-26":"badge-25";
     return `<tr>
       <td><span class="badge ${sc}">${r.season}</span></td>
-      <td>${r.date.replace(/-/g,"\u2011")}</td>
+      <td>${r.date.replace(/-/g,"‑")}</td>
       <td>${r.loc}</td>
       <td>${r.country}</td>
       <td style="font-weight:700">${placeLabel(r.position)}</td>
@@ -788,7 +811,6 @@ function renderWcTable() {
     </tr>`;
   }).join("");
 }
-
 function sortT(tab, col) {
   const s = tableState[tab];
   if (s.col===col) s.dir*=-1; else { s.col=col; s.dir=1; }
@@ -802,7 +824,6 @@ function sortT(tab, col) {
   });
   if(tab==="noram") renderNoramTable(); else renderWcTable();
 }
-
 renderNoramTable();
 renderWcTable();
 </script>
